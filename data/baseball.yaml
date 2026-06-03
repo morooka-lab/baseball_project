@@ -1,0 +1,80 @@
+path: ./custom_dataset/match
+
+train:
+  - images/clip_000
+  - images/clip_001
+  - images/clip_002
+  - images/clip_003
+  - images/clip_004
+  - images/clip_005
+  - images/clip_006
+  - images/clip_007
+  - images/clip_008
+  - images/clip_009
+  - images/clip_010
+  - images/clip_011
+  - images/clip_012
+  - images/clip_013
+  - images/clip_014
+  - images/clip_015
+  - images/clip_016
+  - images/clip_017
+  - images/clip_018
+  - images/clip_019
+  - images/clip_020
+  - images/clip_021
+  - images/clip_022
+  - images/clip_023
+  - images/clip_024
+  - images/clip_025
+  - images/clip_026
+  - images/clip_027
+  - images/clip_028
+  - images/clip_029
+  - images/clip_030
+  - images/clip_031
+  - images/clip_032
+  - images/clip_033
+  - images/clip_034
+  - images/clip_035
+
+val:
+  - images/clip_000
+  - images/clip_001
+  - images/clip_002
+  - images/clip_003
+  - images/clip_004
+  - images/clip_005
+  - images/clip_006
+  - images/clip_007
+  - images/clip_008
+  - images/clip_009
+  - images/clip_010
+  - images/clip_011
+  - images/clip_012
+  - images/clip_013
+  - images/clip_014
+  - images/clip_015
+  - images/clip_016
+  - images/clip_017
+  - images/clip_018
+  - images/clip_019
+  - images/clip_020
+  - images/clip_021
+  - images/clip_022
+  - images/clip_023
+  - images/clip_024
+  - images/clip_025
+  - images/clip_026
+  - images/clip_027
+  - images/clip_028
+  - images/clip_029
+  - images/clip_030
+  - images/clip_031
+  - images/clip_032
+  - images/clip_033
+  - images/clip_034
+  - images/clip_035
+
+nc: 1
+names: ['ball']

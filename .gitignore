@@ -1,0 +1,13 @@
+# .gitignore の記述例
+
+# データセット関連（入力動画、画像、CSVなど）
+custom_dataset/
+example_dataset/
+test_videos/
+
+# 学習結果、出力結果の画像・動画
+runs/
+
+# Pythonのキャッシュや仮想環境
+__pycache__/
+.env
