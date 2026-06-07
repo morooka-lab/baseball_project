@@ -4,6 +4,7 @@ import cv2
 def record_timestamps(video_path):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
+        print(video_path)
         print("エラー: 動画を読み込めませんでした。パスを確認してください。")
         return
 
@@ -130,5 +131,5 @@ def record_timestamps(video_path):
 # ==========================================
 if __name__ == "__main__":
     # 解析したい動画のパスを指定してください
-    VIDEO_FILE = "C:\\Users\\ytake\\TrackNet_Baseball\\custom_dataset\\match\\videos\\senga_pitch.mp4"
+    VIDEO_FILE = "/data2/baseball_data/RKB/EVS-C3-117B.mp4"
     record_timestamps(VIDEO_FILE)
