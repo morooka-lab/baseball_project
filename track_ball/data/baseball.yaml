@@ -1,4 +1,5 @@
-path: ./custom_dataset/match
+#path: ./custom_dataset/match
+path: /data2/baseball_data/tracknet_dataset/custom_dataset/match
 
 train:
   - images/clip_000
