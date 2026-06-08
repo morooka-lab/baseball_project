@@ -31,19 +31,19 @@ HTML = r"""<!DOCTYPE html>
 <title>タイムスタンプ取得ツール</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
-  h1 { font-size: 1.1em; color: #aaa; margin: 0 0 16px; }
-  .container { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-  .left { flex: 1; min-width: 400px; }
-  .right { width: 300px; }
-  video { width: 100%; border-radius: 6px; background: #000; display: block; }
-  .time-display { font-size: 1.6em; font-family: monospace; margin: 8px 0 4px; color: #4f4; }
-  .status { font-size: 0.95em; margin: 6px 0; min-height: 1.3em; padding: 6px 10px; border-radius: 4px; }
+  body { font-family: sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 16px; height: 100vh; display: flex; flex-direction: column; }
+  h1 { font-size: 1.1em; color: #aaa; margin: 0 0 12px; flex-shrink: 0; }
+  .container { display: flex; gap: 16px; align-items: stretch; flex: 1; overflow: hidden; }
+  .left { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; background: #000; border-radius: 6px; overflow: hidden; }
+  .right { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 0; overflow-y: auto; }
+  video { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .time-display { font-size: 1.6em; font-family: monospace; margin: 0 0 6px; color: #4f4; }
+  .status { font-size: 0.9em; margin: 0 0 8px; min-height: 1.3em; padding: 6px 10px; border-radius: 4px; }
   .status.waiting  { background: #2a2a2a; color: #aaa; }
   .status.started  { background: #3a2a00; color: #fc0; }
   .status.recorded { background: #0a2a0a; color: #4f4; }
   .status.error    { background: #2a0a0a; color: #f66; }
-  .buttons { display: flex; gap: 8px; margin: 10px 0; }
+  .buttons { display: flex; gap: 8px; margin: 0 0 8px; }
   button { padding: 10px 16px; font-size: 0.95em; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
   .btn-start { background: #c60; color: #fff; flex: 1; }
   .btn-end   { background: #080; color: #fff; flex: 1; }
@@ -51,10 +51,10 @@ HTML = r"""<!DOCTYPE html>
   .btn-start:hover { background: #e80; }
   .btn-end:hover   { background: #0a0; }
   .btn-undo:hover  { background: #666; }
-  .shortcuts { font-size: 0.78em; color: #666; line-height: 1.8; }
+  .shortcuts { font-size: 0.75em; color: #666; line-height: 1.8; }
   .shortcuts b { color: #888; }
-  h2 { font-size: 0.9em; color: #888; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .ts-list { list-style: none; padding: 0; margin: 0 0 12px; max-height: 320px; overflow-y: auto; }
+  h2 { font-size: 0.9em; color: #888; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ts-list { list-style: none; padding: 0; margin: 0 0 8px; max-height: 200px; overflow-y: auto; flex-shrink: 0; }
   .ts-list li {
     background: #252525; border-radius: 4px; padding: 7px 10px; margin-bottom: 4px;
     font-family: monospace; font-size: 0.85em; display: flex; justify-content: space-between; align-items: center;
@@ -62,11 +62,11 @@ HTML = r"""<!DOCTYPE html>
   .ts-list li.empty { color: #555; font-style: italic; font-family: sans-serif; }
   .del { cursor: pointer; color: #833; padding: 0 4px; }
   .del:hover { color: #f66; }
-  .btn-save { background: #17a; color: #fff; width: 100%; padding: 11px; font-size: 0.95em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+  .btn-save { background: #17a; color: #fff; width: 100%; padding: 11px; font-size: 0.95em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; flex-shrink: 0; }
   .btn-save:hover { background: #19c; }
   .saved-msg { font-size: 0.82em; color: #4f4; margin-top: 6px; min-height: 1.2em; word-break: break-all; }
-  .sep { border: none; border-top: 1px solid #333; margin: 14px 0; }
-  .output-box { background: #111; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 0.8em; white-space: pre; color: #8f8; max-height: 180px; overflow-y: auto; }
+  .sep { border: none; border-top: 1px solid #333; margin: 10px 0; flex-shrink: 0; }
+  .output-box { background: #111; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 0.8em; white-space: pre; color: #8f8; max-height: 150px; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -76,6 +76,9 @@ HTML = r"""<!DOCTYPE html>
     <video id="video" controls>
       <source src="/video" type="video/mp4">
     </video>
+  </div>
+
+  <div class="right">
     <div class="time-display" id="timeDisplay">00:00.000</div>
     <div class="status waiting" id="status">▶ 再生して投球シーンを探してください</div>
     <div class="buttons">
@@ -91,9 +94,7 @@ HTML = r"""<!DOCTYPE html>
       <b>E</b> 終了 &nbsp;|&nbsp;
       <b>U</b> 取り消し
     </div>
-  </div>
-
-  <div class="right">
+    <hr class="sep">
     <h2>記録済み (<span id="count">0</span>件)</h2>
     <ul class="ts-list" id="tsList">
       <li class="empty">まだ記録がありません</li>
