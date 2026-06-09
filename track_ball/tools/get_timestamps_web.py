@@ -73,9 +73,7 @@ HTML = r"""<!DOCTYPE html>
 <h1>🎬 タイムスタンプ取得ツール（Web版）</h1>
 <div class="container">
   <div class="left">
-    <video id="video" controls>
-      <source src="/video" type="video/mp4">
-    </video>
+    <video id="video" controls></video>
   </div>
 
   <div class="right">
@@ -108,7 +106,10 @@ HTML = r"""<!DOCTYPE html>
 </div>
 
 <script>
+const params = new URLSearchParams(window.location.search);
+const videoParam = params.get('video') || '';
 const video = document.getElementById('video');
+video.src = '/video?video=' + encodeURIComponent(videoParam);
 let startTime = null;
 let timestamps = [];
 
@@ -200,7 +201,7 @@ async function saveToFile() {
   const res = await fetch('/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ timestamps })
+    body: JSON.stringify({ timestamps, video_path: videoParam })
   });
   const data = await res.json();
   document.getElementById('savedMsg').textContent = `保存先: ${data.path}`;
@@ -246,7 +247,12 @@ def index():
 @app.route("/video")
 def video():
     """HTTP Range requestに対応した動画ストリーミング（シーク対応）。"""
-    file_size = os.path.getsize(VIDEO_PATH)
+    path = request.args.get("video", "") or VIDEO_PATH
+    path = os.path.abspath(path)
+    if not os.path.exists(path):
+        return "動画ファイルが見つかりません", 404
+
+    file_size = os.path.getsize(path)
     range_header = request.headers.get("Range")
 
     if range_header:
@@ -259,7 +265,7 @@ def video():
         )
         length = byte_end - byte_start + 1
 
-        with open(VIDEO_PATH, "rb") as f:
+        with open(path, "rb") as f:
             f.seek(byte_start)
             data = f.read(length)
 
@@ -275,7 +281,7 @@ def video():
         )
 
     return Response(
-        open(VIDEO_PATH, "rb"),
+        open(path, "rb"),
         mimetype="video/mp4",
         headers={"Accept-Ranges": "bytes", "Content-Length": str(file_size)},
     )
@@ -287,7 +293,9 @@ def save():
     data = request.get_json()
     ts_list = data.get("timestamps", [])
 
-    output_path = Path(VIDEO_PATH).parent / "timestamps.py"
+    video_path = data.get("video_path", "") or VIDEO_PATH
+    video_path = os.path.abspath(video_path)
+    output_path = Path(video_path).parent / "timestamps.py"
     lines = ["TIMESTAMPS = ["]
     for start, end in ts_list:
         lines.append(f"    ({start:.2f}, {end:.2f}),")
@@ -304,22 +312,21 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="例: python get_timestamps_web.py /path/to/game.mp4 --port 5001",
     )
-    parser.add_argument("video_path", help="動画ファイルのパス")
+    parser.add_argument("video_path", nargs="?", default="", help="動画ファイルのパス（省略可：URLパラメータで指定可能）")
     parser.add_argument("--port", type=int, default=5001, help="ポート番号 (default: 5001)")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    VIDEO_PATH = os.path.abspath(args.video_path)
-
-    if not os.path.exists(VIDEO_PATH):
-        print(f"エラー: 動画ファイルが見つかりません: {VIDEO_PATH}")
-        sys.exit(1)
-
-    print(f"動画: {VIDEO_PATH}")
+    if args.video_path:
+        VIDEO_PATH = os.path.abspath(args.video_path)
+        if not os.path.exists(VIDEO_PATH):
+            print(f"エラー: 動画ファイルが見つかりません: {VIDEO_PATH}")
+            sys.exit(1)
+        print(f"動画: {VIDEO_PATH}")
     print(f"ブラウザで http://localhost:{args.port} を開いてください")
     print("(VS Code Remote は自動でポートをフォワードします)")
     print("終了: Ctrl+C\n")
 
-    app.run(host="0.0.0.0", port=args.port, debug=False)
+    app.run(host="0.0.0.0", port=args.port, debug=False, threaded=True)
