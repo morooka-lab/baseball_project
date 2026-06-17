@@ -1,21 +1,20 @@
 """
 Web版 get_timestamps.py
-動画をブラウザで再生しながらタイムスタンプを記録するツール。
+動画をブラウザで再生しながらタイムスタンプを記録し、クリップを作成するツール。
 
 使い方:
+    python get_timestamps_web.py
     python get_timestamps_web.py <動画ファイルパス>
-    python get_timestamps_web.py <動画ファイルパス> --port 5001
+    python get_timestamps_web.py --port 5001
 
 VS Code Remote 使用時はポートが自動フォワードされます。
 ブラウザで http://localhost:5001 を開いてください。
-
-削除方法:
-    このファイル (get_timestamps_web.py) を削除するだけです。
 """
 
 import argparse
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -23,6 +22,7 @@ from flask import Flask, Response, jsonify, render_template_string, request
 
 app = Flask(__name__)
 VIDEO_PATH = ""
+DATA_DIR = "/data2/baseball_data/RKB"
 
 HTML = r"""<!DOCTYPE html>
 <html lang="ja">
@@ -31,8 +31,16 @@ HTML = r"""<!DOCTYPE html>
 <title>タイムスタンプ取得ツール</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 16px; height: 100vh; display: flex; flex-direction: column; }
-  h1 { font-size: 1.1em; color: #aaa; margin: 0 0 12px; flex-shrink: 0; }
+  body { font-family: sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 12px; height: 100vh; display: flex; flex-direction: column; gap: 8px; }
+  h1 { font-size: 1.1em; color: #aaa; margin: 0; flex-shrink: 0; }
+  .top-bar { display: flex; gap: 12px; align-items: flex-end; flex-shrink: 0; background: #222; border-radius: 6px; padding: 10px 14px; }
+  .top-bar label { font-size: 0.8em; color: #888; display: block; margin-bottom: 4px; }
+  .top-bar select, .top-bar input[type=text] {
+    background: #333; color: #eee; border: 1px solid #444; border-radius: 4px;
+    padding: 6px 8px; font-size: 0.9em;
+  }
+  .top-bar select { width: 340px; }
+  .top-bar input[type=text] { width: 280px; }
   .container { display: flex; gap: 16px; align-items: stretch; flex: 1; overflow: hidden; }
   .left { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; background: #000; border-radius: 6px; overflow: hidden; }
   .right { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 0; overflow-y: auto; }
@@ -62,15 +70,37 @@ HTML = r"""<!DOCTYPE html>
   .ts-list li.empty { color: #555; font-style: italic; font-family: sans-serif; }
   .del { cursor: pointer; color: #833; padding: 0 4px; }
   .del:hover { color: #f66; }
-  .btn-save { background: #17a; color: #fff; width: 100%; padding: 11px; font-size: 0.95em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; flex-shrink: 0; }
+  .action-buttons { display: flex; gap: 8px; flex-shrink: 0; }
+  .btn-save { background: #17a; color: #fff; flex: 1; padding: 11px; font-size: 0.95em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
   .btn-save:hover { background: #19c; }
+  .btn-clip { background: #7a2; color: #fff; flex: 1; padding: 11px; font-size: 0.95em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+  .btn-clip:hover { background: #9c3; }
+  .btn-clip:disabled { background: #444; color: #666; cursor: not-allowed; }
   .saved-msg { font-size: 0.82em; color: #4f4; margin-top: 6px; min-height: 1.2em; word-break: break-all; }
+  .clip-status { font-size: 0.82em; margin-top: 6px; min-height: 1.2em; word-break: break-all; }
+  .clip-status.ok    { color: #4f4; }
+  .clip-status.error { color: #f66; }
+  .clip-status.running { color: #fc0; }
   .sep { border: none; border-top: 1px solid #333; margin: 10px 0; flex-shrink: 0; }
   .output-box { background: #111; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 0.8em; white-space: pre; color: #8f8; max-height: 150px; overflow-y: auto; }
 </style>
 </head>
 <body>
 <h1>🎬 タイムスタンプ取得ツール（Web版）</h1>
+
+<div class="top-bar">
+  <div>
+    <label>動画ファイル</label>
+    <select id="fileSelect" onchange="selectFile(this.value)">
+      <option value="">-- ファイルを選択 --</option>
+    </select>
+  </div>
+  <div>
+    <label>出力先ディレクトリ</label>
+    <input type="text" id="outputDir" placeholder="例: /data2/baseball_data/RKB/videos" />
+  </div>
+</div>
+
 <div class="container">
   <div class="left">
     <video id="video" controls></video>
@@ -78,7 +108,7 @@ HTML = r"""<!DOCTYPE html>
 
   <div class="right">
     <div class="time-display" id="timeDisplay">00:00.000</div>
-    <div class="status waiting" id="status">▶ 再生して投球シーンを探してください</div>
+    <div class="status waiting" id="status">▶ ファイルを選択して再生してください</div>
     <div class="buttons">
       <button class="btn-start" onclick="markStart()">⏺ 開始 [S]</button>
       <button class="btn-end"   onclick="markEnd()">⏹ 終了 [E]</button>
@@ -97,8 +127,12 @@ HTML = r"""<!DOCTYPE html>
     <ul class="ts-list" id="tsList">
       <li class="empty">まだ記録がありません</li>
     </ul>
-    <button class="btn-save" onclick="saveToFile()">💾 ファイルに保存</button>
+    <div class="action-buttons">
+      <button class="btn-save" onclick="saveToFile()">💾 保存</button>
+      <button class="btn-clip" onclick="createClips()">✂ クリップ作成</button>
+    </div>
     <div class="saved-msg" id="savedMsg"></div>
+    <div class="clip-status" id="clipStatus"></div>
     <hr class="sep">
     <h2>出力プレビュー</h2>
     <div class="output-box" id="outputBox">TIMESTAMPS = []</div>
@@ -106,18 +140,48 @@ HTML = r"""<!DOCTYPE html>
 </div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const videoParam = params.get('video') || '';
 const video = document.getElementById('video');
-video.src = '/video?video=' + encodeURIComponent(videoParam);
+let currentVideoPath = '';
 let startTime = null;
 let timestamps = [];
-
-// FPS estimation for 1-frame step (updated after metadata loads)
 let fps = 30;
-video.addEventListener('loadedmetadata', () => {
-  // HTML5 video doesn't expose FPS directly; default 30 is fine for step
-});
+
+// ファイル一覧を取得してセレクタに反映
+async function loadFileList() {
+  try {
+    const res = await fetch('/files');
+    const files = await res.json();
+    const sel = document.getElementById('fileSelect');
+    files.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f.split('/').pop();
+      sel.appendChild(opt);
+    });
+    // URL パラメータで動画が指定されていれば選択状態にする
+    const params = new URLSearchParams(window.location.search);
+    const initialVideo = params.get('video') || '';
+    if (initialVideo) {
+      sel.value = initialVideo;
+      selectFile(initialVideo);
+    }
+  } catch (e) {
+    console.error('ファイル一覧の取得に失敗:', e);
+  }
+}
+
+function selectFile(path) {
+  if (!path) return;
+  currentVideoPath = path;
+  video.src = '/video?video=' + encodeURIComponent(path);
+  video.load();
+  // 出力先デフォルト: 動画と同じディレクトリ
+  const dir = path.substring(0, path.lastIndexOf('/'));
+  const outputDir = document.getElementById('outputDir');
+  if (!outputDir.value) outputDir.value = dir;
+  document.getElementById('status').textContent = '▶ 再生して投球シーンを探してください';
+  document.getElementById('status').className = 'status waiting';
+}
 
 function formatTime(t) {
   const m = Math.floor(t / 60).toString().padStart(2, '0');
@@ -183,7 +247,7 @@ function updateUI() {
     list.innerHTML = '<li class="empty">まだ記録がありません</li>';
   } else {
     list.innerHTML = timestamps.map((ts, i) =>
-      `<li><span>#${i+1} &nbsp;${ts[0].toFixed(2)}s → ${ts[1].toFixed(2)}s</span>
+      `<li><span>#${i+1} &nbsp;${ts[0].toFixed(2)}s → ${ts[1].toFixed(2)}s &nbsp;(${(ts[1]-ts[0]).toFixed(2)}s)</span>
        <span class="del" onclick="deleteAt(${i})">✕</span></li>`
     ).join('');
   }
@@ -198,17 +262,58 @@ async function saveToFile() {
     setStatus('⚠ 保存するタイムスタンプがありません', 'error');
     return;
   }
+  const outputDir = document.getElementById('outputDir').value.trim();
   const res = await fetch('/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ timestamps, video_path: videoParam })
+    body: JSON.stringify({ timestamps, video_path: currentVideoPath, output_dir: outputDir })
   });
   const data = await res.json();
   document.getElementById('savedMsg').textContent = `保存先: ${data.path}`;
 }
 
+async function createClips() {
+  if (timestamps.length === 0) {
+    setStatus('⚠ クリップを作成するタイムスタンプがありません', 'error');
+    return;
+  }
+  if (!currentVideoPath) {
+    setStatus('⚠ 動画ファイルを選択してください', 'error');
+    return;
+  }
+  const outputDir = document.getElementById('outputDir').value.trim();
+  const clipBtn = document.querySelector('.btn-clip');
+  clipBtn.disabled = true;
+  const clipStatus = document.getElementById('clipStatus');
+  clipStatus.className = 'clip-status running';
+  clipStatus.textContent = `✂ ${timestamps.length}件のクリップを作成中...`;
+
+  try {
+    const res = await fetch('/clip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timestamps, video_path: currentVideoPath, output_dir: outputDir })
+    });
+    const data = await res.json();
+    const ok = data.clips.filter(c => c.status === 'ok').length;
+    const err = data.clips.filter(c => c.status === 'error').length;
+    if (err === 0) {
+      clipStatus.className = 'clip-status ok';
+      clipStatus.textContent = `✅ ${ok}件のクリップを作成しました → ${data.output_dir}`;
+    } else {
+      clipStatus.className = 'clip-status error';
+      clipStatus.textContent = `⚠ ${ok}件成功 / ${err}件失敗 → ${data.output_dir}`;
+    }
+  } catch (e) {
+    clipStatus.className = 'clip-status error';
+    clipStatus.textContent = `エラー: ${e.message}`;
+  } finally {
+    clipBtn.disabled = false;
+  }
+}
+
 document.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   switch (e.key.toLowerCase()) {
     case 's': markStart(); break;
     case 'e': markEnd(); break;
@@ -233,6 +338,8 @@ document.addEventListener('keydown', (e) => {
       break;
   }
 });
+
+loadFileList();
 </script>
 </body>
 </html>
@@ -242,6 +349,16 @@ document.addEventListener('keydown', (e) => {
 @app.route("/")
 def index():
     return render_template_string(HTML)
+
+
+@app.route("/files")
+def list_files():
+    """データディレクトリのmp4ファイル一覧を返す。"""
+    data_dir = Path(DATA_DIR)
+    if not data_dir.exists():
+        return jsonify([])
+    files = sorted(data_dir.glob("*.mp4"))
+    return jsonify([str(f) for f in files])
 
 
 @app.route("/video")
@@ -289,13 +406,19 @@ def video():
 
 @app.route("/save", methods=["POST"])
 def save():
-    """タイムスタンプを動画と同じディレクトリに timestamps.py として保存する。"""
+    """タイムスタンプをファイルに保存する。"""
     data = request.get_json()
     ts_list = data.get("timestamps", [])
-
     video_path = data.get("video_path", "") or VIDEO_PATH
     video_path = os.path.abspath(video_path)
-    output_path = Path(video_path).parent / "timestamps.py"
+    output_dir = data.get("output_dir", "").strip()
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = Path(output_dir) / "timestamps.py"
+    else:
+        output_path = Path(video_path).parent / "timestamps.py"
+
     lines = ["TIMESTAMPS = ["]
     for start, end in ts_list:
         lines.append(f"    ({start:.2f}, {end:.2f}),")
@@ -306,25 +429,73 @@ def save():
     return jsonify({"path": str(output_path)})
 
 
+@app.route("/clip", methods=["POST"])
+def clip():
+    """タイムスタンプに従ってffmpegで動画クリップを作成する。"""
+    data = request.get_json()
+    ts_list = data.get("timestamps", [])
+    video_path = data.get("video_path", "") or VIDEO_PATH
+    video_path = os.path.abspath(video_path)
+    output_dir = data.get("output_dir", "").strip()
+
+    if not output_dir:
+        output_dir = str(Path(video_path).parent)
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    stem = Path(video_path).stem
+    results = []
+
+    for i, (start, end) in enumerate(ts_list):
+        duration = round(end - start, 3)
+        output_name = f"{stem}_clip_{i+1:03d}_{start:.2f}s_{end:.2f}s.mp4"
+        output_path = os.path.join(output_dir, output_name)
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", str(start),
+            "-i", video_path,
+            "-t", str(duration),
+            "-c", "copy",
+            output_path,
+        ]
+
+        print(f"[{i+1}/{len(ts_list)}] {output_name}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            results.append({"path": output_path, "status": "ok"})
+            print(f"  → 完了")
+        else:
+            results.append({"path": output_path, "status": "error", "error": result.stderr[-200:]})
+            print(f"  → エラー: {result.stderr[-100:]}")
+
+    return jsonify({"clips": results, "output_dir": output_dir})
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Web版タイムスタンプ取得ツール",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="例: python get_timestamps_web.py /path/to/game.mp4 --port 5001",
+        epilog="例: python get_timestamps_web.py\n     python get_timestamps_web.py /path/to/game.mp4 --port 5001",
     )
-    parser.add_argument("video_path", nargs="?", default="", help="動画ファイルのパス（省略可：URLパラメータで指定可能）")
+    parser.add_argument("video_path", nargs="?", default="", help="動画ファイルのパス（省略可：UIで選択可能）")
     parser.add_argument("--port", type=int, default=5001, help="ポート番号 (default: 5001)")
+    parser.add_argument("--data-dir", default=DATA_DIR, help=f"動画ファイルのディレクトリ (default: {DATA_DIR})")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
+    DATA_DIR = args.data_dir
+
     if args.video_path:
         VIDEO_PATH = os.path.abspath(args.video_path)
         if not os.path.exists(VIDEO_PATH):
             print(f"エラー: 動画ファイルが見つかりません: {VIDEO_PATH}")
             sys.exit(1)
         print(f"動画: {VIDEO_PATH}")
+
+    print(f"データディレクトリ: {DATA_DIR}")
     print(f"ブラウザで http://localhost:{args.port} を開いてください")
     print("(VS Code Remote は自動でポートをフォワードします)")
     print("終了: Ctrl+C\n")
