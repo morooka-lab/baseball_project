@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>タイムスタンプ取得ツール</title>
+<link rel="stylesheet" href="/static/css/timestamps.css">
+</head>
+<body>
+<h1>🎬 タイムスタンプ取得ツール（Web版）</h1>
+
+<div class="top-bar">
+  <div>
+    <label>動画ファイル</label>
+    <select id="fileSelect" onchange="selectFile(this.value)">
+      <option value="">-- ファイルを選択 --</option>
+    </select>
+  </div>
+  <div>
+    <label>出力先ディレクトリ</label>
+    <input type="text" id="outputDir" placeholder="例: /data2/baseball_data/RKB/videos" />
+  </div>
+</div>
+
+<div class="container">
+  <div class="left">
+    <video id="video" controls></video>
+  </div>
+
+  <div class="right">
+    <div class="time-display" id="timeDisplay">00:00.000</div>
+    <div class="status waiting" id="status">▶ ファイルを選択して再生してください</div>
+    <div class="buttons">
+      <button class="btn-start" onclick="markStart()">⏺ 開始 [S]</button>
+      <button class="btn-end"   onclick="markEnd()">⏹ 終了 [E]</button>
+      <button class="btn-undo"  onclick="undoLast()">↩ [U]</button>
+    </div>
+    <div class="shortcuts">
+      <b>スペース</b> 再生/停止 &nbsp;|&nbsp;
+      <b>←/→</b> ±5秒 &nbsp;|&nbsp;
+      <b>A/D</b> 1フレーム &nbsp;|&nbsp;
+      <b>S</b> 開始 &nbsp;|&nbsp;
+      <b>E</b> 終了 &nbsp;|&nbsp;
+      <b>U</b> 取り消し
+    </div>
+    <hr class="sep">
+    <h2>記録済み (<span id="count">0</span>件)</h2>
+    <ul class="ts-list" id="tsList">
+      <li class="empty">まだ記録がありません</li>
+    </ul>
+    <div class="action-buttons">
+      <button class="btn-save" onclick="saveToFile()">💾 保存</button>
+      <button class="btn-clip" onclick="createClips()">✂ クリップ作成</button>
+    </div>
+    <div class="saved-msg" id="savedMsg"></div>
+    <div class="clip-status" id="clipStatus"></div>
+    <hr class="sep">
+    <h2>出力プレビュー</h2>
+    <div class="output-box" id="outputBox">TIMESTAMPS = []</div>
+  </div>
+</div>
+
+<script>const BASE = {{ request.script_root | tojson }};</script>
+<script src="/static/js/timestamps.js"></script>
+</body>
+</html>

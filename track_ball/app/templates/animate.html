@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ボール 3D 軌道アニメーション</title>
+<link rel="stylesheet" href="/static/css/animate.css">
+</head>
+<body>
+
+<div id="legend">
+  <span class="dot" style="background:#ff6600"></span>投球軌道（補間）<br>
+  <span class="dot" style="background:#ffdd00"></span>検出点<br>
+  <span class="dot" style="background:#44aaff"></span>リリース点<br>
+  <span class="dot" style="background:#ff4444"></span>到達点<br>
+  <span class="sq"  style="background:#ffee44; border-radius:0"></span>ストライクゾーン ({{ sz_bottom_str }}〜{{ sz_top_str }}m)<br>
+  <span class="dot" style="background:#ffffff"></span>ボール（再生中）
+</div>
+
+<div id="hint">
+  ドラッグ: 回転<br>
+  ホイール: ズーム<br>
+  右ドラッグ: パン
+</div>
+
+<div id="ui">
+  <button id="btnPlay">⏸ 一時停止</button>
+  <label>速度
+    <input type="range" id="speed" min="1" max="10" value="5">
+    <span id="spv">5</span>
+  </label>
+</div>
+
+<!-- Three.js データ（Python から JSON で埋め込み） -->
+<script id="traj-data" type="application/json">
+{
+  "detected":  {{ detected_json  | safe }},
+  "interp":    {{ interp_json    | safe }},
+  "sz_bottom": {{ sz_bottom_json | safe }},
+  "sz_top":    {{ sz_top_json    | safe }}
+}
+</script>
+
+<!-- Three.js (ES Module + importmap) -->
+<script type="importmap">
+{
+  "imports": {
+    "three":         "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="/static/js/animate.js"></script>
+
+</body>
+</html>

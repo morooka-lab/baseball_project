@@ -1,0 +1,53 @@
+* { box-sizing: border-box; }
+body { font-family: sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 12px; height: 100vh; display: flex; flex-direction: column; gap: 8px; }
+h1 { font-size: 1.1em; color: #aaa; margin: 0; flex-shrink: 0; }
+.top-bar { display: flex; gap: 12px; align-items: flex-end; flex-shrink: 0; background: #222; border-radius: 6px; padding: 10px 14px; }
+.top-bar label { font-size: 0.8em; color: #888; display: block; margin-bottom: 4px; }
+.top-bar select, .top-bar input[type=text] {
+  background: #333; color: #eee; border: 1px solid #444; border-radius: 4px;
+  padding: 6px 8px; font-size: 0.9em;
+}
+.top-bar select { width: 340px; }
+.top-bar input[type=text] { width: 280px; }
+.container { display: flex; gap: 16px; align-items: stretch; flex: 1; overflow: hidden; }
+.left { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; background: #000; border-radius: 6px; overflow: hidden; }
+.right { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 0; overflow-y: auto; }
+video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.time-display { font-size: 1.6em; font-family: monospace; margin: 0 0 6px; color: #4f4; }
+.status { font-size: 0.9em; margin: 0 0 8px; min-height: 1.3em; padding: 6px 10px; border-radius: 4px; }
+.status.waiting  { background: #2a2a2a; color: #aaa; }
+.status.started  { background: #3a2a00; color: #fc0; }
+.status.recorded { background: #0a2a0a; color: #4f4; }
+.status.error    { background: #2a0a0a; color: #f66; }
+.buttons { display: flex; gap: 8px; margin: 0 0 8px; }
+button { padding: 10px 16px; font-size: 0.95em; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.btn-start { background: #c60; color: #fff; flex: 1; }
+.btn-end   { background: #080; color: #fff; flex: 1; }
+.btn-undo  { background: #444; color: #ccc; }
+.btn-start:hover { background: #e80; }
+.btn-end:hover   { background: #0a0; }
+.btn-undo:hover  { background: #666; }
+.shortcuts { font-size: 0.75em; color: #666; line-height: 1.8; }
+.shortcuts b { color: #888; }
+h2 { font-size: 0.9em; color: #888; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.ts-list { list-style: none; padding: 0; margin: 0 0 8px; max-height: 200px; overflow-y: auto; flex-shrink: 0; }
+.ts-list li {
+  background: #252525; border-radius: 4px; padding: 7px 10px; margin-bottom: 4px;
+  font-family: monospace; font-size: 0.85em; display: flex; justify-content: space-between; align-items: center;
+}
+.ts-list li.empty { color: #555; font-style: italic; font-family: sans-serif; }
+.del { cursor: pointer; color: #833; padding: 0 4px; }
+.del:hover { color: #f66; }
+.action-buttons { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-save { background: #17a; color: #fff; flex: 1; padding: 11px; font-size: 0.95em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+.btn-save:hover { background: #19c; }
+.btn-clip { background: #7a2; color: #fff; flex: 1; padding: 11px; font-size: 0.95em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+.btn-clip:hover { background: #9c3; }
+.btn-clip:disabled { background: #444; color: #666; cursor: not-allowed; }
+.saved-msg { font-size: 0.82em; color: #4f4; margin-top: 6px; min-height: 1.2em; word-break: break-all; }
+.clip-status { font-size: 0.82em; margin-top: 6px; min-height: 1.2em; word-break: break-all; }
+.clip-status.ok    { color: #4f4; }
+.clip-status.error { color: #f66; }
+.clip-status.running { color: #fc0; }
+.sep { border: none; border-top: 1px solid #333; margin: 10px 0; flex-shrink: 0; }
+.output-box { background: #111; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 0.8em; white-space: pre; color: #8f8; max-height: 150px; overflow-y: auto; }

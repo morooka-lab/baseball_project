@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ボールラベリングツール</title>
+<link rel="stylesheet" href="/static/css/label.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>ボールラベリングツール</h1>
+  <span class="shortcuts">
+    <b>クリック</b> ボール位置 &nbsp;|&nbsp;
+    <b>右クリック</b> 非表示(HIDDEN) &nbsp;|&nbsp;
+    <b>← / →</b> 次/前フレーム &nbsp;|&nbsp;
+    <b>N / P</b> 次/前フレーム &nbsp;|&nbsp;
+    <b>F / B</b> ±36フレーム &nbsp;|&nbsp;
+    <b>Z / X</b> 最初/最後 &nbsp;|&nbsp;
+    <b>+ / -</b> サークルサイズ &nbsp;|&nbsp;
+    <b>S</b> 保存
+  </span>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">動画一覧 (<span id="fileCount">0</span> 本)</div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="canvas-area">
+    <div class="canvas-wrap" id="canvasWrap">
+      <div class="no-video" id="noVideo">← 動画を選択してください</div>
+      <canvas id="canvas" style="display:none"></canvas>
+    </div>
+    <div class="controls">
+      <div class="frame-info" id="frameInfo">-- / --</div>
+      <div class="state-badge state-hidden" id="stateBadge">--</div>
+      <div class="progress-info" id="progressInfo"></div>
+      <div id="cacheProgress"></div>
+      <div class="nav-buttons" id="navButtons">
+        <button onclick="goFirst()" title="最初のフレーム (Z)">|&lt;</button>
+        <button onclick="navigate(-36)" title="36フレーム戻る (B)">&lt;&lt;36</button>
+        <button onclick="navigate(-1)" title="前のフレーム (P)">&lt;</button>
+        <button onclick="navigate(1)"  title="次のフレーム (N)">&gt;</button>
+        <button onclick="navigate(36)" title="36フレーム進む (F)">36&gt;&gt;</button>
+        <button onclick="goLast()" title="最後のフレーム (X)">&gt;|</button>
+      </div>
+      <button class="btn-save" onclick="saveLabels()">💾 保存 [S]</button>
+      <div class="saved-msg" id="savedMsg"></div>
+      <div class="dirty-badge" id="dirtyBadge"></div>
+      <div class="csv-path" id="csvPath"></div>
+    </div>
+  </div>
+</div>
+
+<script>const BASE = {{ request.script_root | tojson }};</script>
+<script src="/static/js/label.js"></script>
+</body>
+</html>
