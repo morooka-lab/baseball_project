@@ -47,3 +47,4 @@ typing_extensions==4.15.0
 tzdata==2023.3
 urllib3==2.1.0
 Werkzeug==3.0.1
+open3d
