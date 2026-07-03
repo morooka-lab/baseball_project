@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>{{ "座標" if annotation_type == "point" else "矩形" }}アノテーションツール - {{ task_name }}</title>
+<link rel="stylesheet" href="/static/css/label.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>{{ "座標" if annotation_type == "point" else "矩形" }}アノテーション: {{ task_description }}</h1>
+  <span class="shortcuts">
+    {% if annotation_type == "point" %}
+    <b>クリック</b> 新規点を配置 &nbsp;|&nbsp;
+    <b>ドラッグ</b> 点を移動 &nbsp;|&nbsp;
+    <b>クリック</b> 点選択 &nbsp;|&nbsp;
+    <b>+ / -</b> 点サイズ &nbsp;|&nbsp;
+    {% else %}
+    <b>ドラッグ</b> 新規box &nbsp;|&nbsp;
+    <b>クリック</b> box選択 &nbsp;|&nbsp;
+    {% endif %}
+    <b>Delete</b> 選択{{ "点" if annotation_type == "point" else "box" }}削除 &nbsp;|&nbsp;
+    <b>1-9</b> クラス切替 &nbsp;|&nbsp;
+    <b>← / →</b> 前後フレーム &nbsp;|&nbsp;
+    <b>F / B</b> ±サンプル間隔 &nbsp;|&nbsp;
+    <b>E</b> このフレームは対象物なしとして確定 &nbsp;|&nbsp;
+    <b>P</b> この位置を以降のフレームに適用 &nbsp;|&nbsp;
+    <b>S</b> 保存
+  </span>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      動画一覧 (<span id="fileCount">0</span> 本) ―
+      アノテーション済み <span id="totalAnnotated">0</span> / <span id="targetFrames">{{ target_frames }}</span> フレーム
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="canvas-area">
+    <div class="canvas-wrap" id="canvasWrap">
+      <div class="no-video" id="noVideo">← 動画を選択してください</div>
+      <canvas id="canvas" style="display:none"></canvas>
+    </div>
+    <div class="class-bar" id="classBar"></div>
+    <div class="controls">
+      <div class="frame-info" id="frameInfo">-- / --</div>
+      <div class="state-badge state-hidden" id="stateBadge">未レビュー</div>
+      <div class="progress-info" id="progressInfo"></div>
+      <div id="cacheProgress"></div>
+      <div class="nav-buttons" id="navButtons">
+        <button onclick="navigate(-step)" title="サンプル間隔だけ戻る (B)">&lt;&lt;</button>
+        <button onclick="navigate(-1)" title="前のフレーム (←)">&lt;</button>
+        <button onclick="navigate(1)"  title="次のフレーム (→)">&gt;</button>
+        <button onclick="navigate(step)" title="サンプル間隔だけ進む (F)">&gt;&gt;</button>
+      </div>
+      <label class="step-label">間隔(秒):
+        <input type="number" id="stepSeconds" value="2" min="0.1" step="0.5" onchange="updateStep()">
+      </label>
+      <label class="step-label">フレーム#:
+        <input type="number" id="jumpFrame" min="0" placeholder="jump">
+        <button onclick="jumpToFrame()">移動</button>
+      </label>
+      {% if annotation_type == "point" %}
+      <label class="step-label">点サイズ:
+        <input type="number" id="pointSize" value="4" min="1" max="30" onchange="updatePointSize()">
+      </label>
+      {% endif %}
+      <button class="btn-empty" onclick="markEmpty()" title="対象物なし (E)">対象物なし [E]</button>
+      <label class="step-label">終了フレーム:
+        <input type="number" id="propagateEnd" min="0" placeholder="動画末尾まで">
+      </label>
+      <button class="btn-propagate" onclick="propagateToEnd()" title="現在フレームの位置を以降のフレームに適用 (P)">以降に適用 [P]</button>
+      <button class="btn-save" onclick="saveLabels()">💾 保存 [S]</button>
+      <div class="saved-msg" id="savedMsg"></div>
+      <div class="dirty-badge" id="dirtyBadge"></div>
+      <div class="label-path" id="labelPath"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE = {{ request.script_root | tojson }};
+  const CLASSES = {{ classes | tojson }};
+  const ANNOTATION_TYPE = {{ annotation_type | tojson }};
+</script>
+<script src="/static/js/label.js"></script>
+</body>
+</html>

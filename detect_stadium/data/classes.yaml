@@ -1,0 +1,27 @@
+# タスクごとのクラス定義。
+# アノテーションツール・学習・推論すべてがこのファイルを共通で参照する。
+stadium:
+  description: 球場情報検出（ピッチャープレート・ホームプレート・バッターボックス）
+  videos_dir: /data2/baseball_data/detect_dataset/videos
+  labels_dir: /data2/baseball_data/detect_dataset/stadium/labels
+  annotation_type: point   # 矩形ではなく座標点でアノテーションする
+  classes:
+    - pitcher_plate
+    - home_plate
+    - batter_box_right
+    - batter_box_left
+  point_counts:  # 各クラスが実際に構成する点の数(1クラス=複数点)。ラベルデータで確認済み
+    pitcher_plate: 2
+    home_plate: 5
+    batter_box_right: 4
+    batter_box_left: 4
+
+player:
+  description: 選手検出（投手・捕手・バッター）
+  videos_dir: /data2/baseball_data/detect_dataset/videos
+  labels_dir: /data2/baseball_data/detect_dataset/player/labels
+  annotation_type: bbox
+  classes:
+    - pitcher
+    - catcher
+    - batter

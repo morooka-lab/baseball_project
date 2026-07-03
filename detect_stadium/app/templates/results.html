@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>推論結果ビューア - {{ task_name }}</title>
+<link rel="stylesheet" href="/static/css/results.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>推論結果ビューア: {{ task_description }}</h1>
+  <span class="predictions-dir">{{ predictions_dir }}</span>
+  <span class="shortcuts">
+    <b>Space</b> 再生/一時停止 &nbsp;|&nbsp;
+    <b>← / →</b> 前後フレーム &nbsp;|&nbsp;
+    <b>Home / End</b> 先頭/末尾
+  </span>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">動画一覧 (<span id="fileCount">0</span> 本)</div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="canvas-area">
+    <div class="canvas-wrap" id="canvasWrap">
+      <div class="no-video" id="noVideo">← 動画を選択してください</div>
+      <canvas id="canvas" style="display:none"></canvas>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="controls">
+      <button id="playBtn" onclick="togglePlay()" disabled>▶ 再生</button>
+      <div class="frame-info" id="frameInfo">-- / --</div>
+      <input type="range" id="frameSlider" min="0" max="0" value="0" disabled
+             oninput="onSliderInput(this.value)">
+      <label class="step-label">再生速度:
+        <select id="playbackFps" onchange="updatePlaybackFps()">
+          <option value="5">5 fps</option>
+          <option value="10">10 fps</option>
+          <option value="15" selected>15 fps</option>
+          <option value="30">30 fps(等速目安)</option>
+          <option value="60">60 fps(高速)</option>
+        </select>
+      </label>
+      <label class="step-label">confidence &ge;
+        <input type="range" id="confThres" min="0" max="1" step="0.05" value="0.3"
+               oninput="onConfChange(this.value)">
+        <span id="confValue">0.30</span>
+      </label>
+      <label class="step-label">
+        <input type="checkbox" id="stabilizeToggle" onchange="onStabilizeToggle(this.checked)">
+        動画単位で統計的に平滑化(座標を1点に固定)
+      </label>
+      <div id="cacheProgress"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE = {{ request.script_root | tojson }};
+  const CLASSES = {{ classes | tojson }};
+</script>
+<script src="/static/js/results.js"></script>
+</body>
+</html>
