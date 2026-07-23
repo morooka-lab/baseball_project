@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchVision AI - Modern UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans JP', sans-serif; }
+        
+        /* トレンドのマイクロアニメーション定義 */
+        .hover-lift {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .spinner-gradient {
+            background: conic-gradient(from 0deg, transparent 0%, #10b981 25%, #3b82f6 100%);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .spinner-inner {
+            background-color: white;
+            border-radius: 50%;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-emerald-50 text-slate-800 h-screen flex flex-col antialiased">
+
+    <header class="bg-white/60 backdrop-blur-md px-10 py-5 flex justify-between items-center sticky top-0 z-30">
+        <div class="flex items-center gap-4">
+            <div class="bg-gradient-to-br from-blue-500 to-emerald-400 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                <i class="fas fa-baseball-ball text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">PitchVision<span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">.AI</span></h1>
+                <p class="text-xs font-bold text-slate-400 tracking-widest mt-0.5">BROADCAST ANALYSIS SYSTEM</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100">
+            <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></span>
+            <span class="text-xs font-bold text-slate-600">System Ready</span>
+        </div>
+    </header>
+
+    <main class="flex-1 p-8 grid grid-cols-12 gap-8 max-w-[1600px] mx-auto w-full items-start">
+        
+        <div class="col-span-12 lg:col-span-5 flex flex-col gap-8">
+            
+            <section class="bg-white rounded-[2rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col hover-lift">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 text-sm flex items-center justify-center font-black">1</span>
+                        映像ソースのインポート
+                    </h2>
+                </div>
+                
+                <div id="dropArea" class="group border-2 border-dashed border-blue-100 hover:border-emerald-300 hover:bg-emerald-50/50 rounded-3xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 text-center relative" onclick="startAnalysis()">
+                    <div class="w-16 h-16 bg-blue-50 group-hover:bg-emerald-400 text-blue-500 group-hover:text-white rounded-full flex items-center justify-center mb-4 text-2xl transition-all duration-300 shadow-md">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p class="text-base font-bold text-slate-700 mb-2 group-hover:text-emerald-700 transition-colors">動画ファイルをドロップ</p>
+                    <p class="text-xs text-slate-400 mb-6 font-medium">MP4 / MOV / MXF 対応</p>
+                    <button class="bg-slate-100 group-hover:bg-white text-slate-600 group-hover:text-emerald-600 font-bold py-3 px-8 rounded-full text-sm transition-all shadow-sm group-hover:shadow">
+                        ファイルを選択
+                    </button>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-[2rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 hover-lift">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 text-sm flex items-center justify-center font-black">2</span>
+                        解析ステータス
+                    </h2>
+                    <span id="statusBadge" class="text-xs px-4 py-1.5 bg-slate-100 text-slate-500 font-bold rounded-full">待機中</span>
+                </div>
+
+                <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100 relative overflow-hidden">
+                    <div class="flex items-center gap-5 mb-5">
+                        <div id="statusIconContainer" class="relative w-12 h-12 flex items-center justify-center">
+                            <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center" id="statusIconStatic">
+                                <i class="fas fa-pause"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <p id="statusTitle" class="font-black text-slate-800 text-lg">システム待機中</p>
+                            <p id="statusDesc" class="text-xs text-slate-500 mt-1 font-medium">映像がアップロードされると自動的に開始します</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs text-slate-500 font-bold">
+                            <span>AI Processing</span>
+                            <span id="progressText" class="text-blue-600 font-black text-sm">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                            <div id="progressBar" class="bg-gradient-to-r from-blue-400 to-emerald-400 h-2.5 rounded-full transition-all duration-300 w-0"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-span-12 lg:col-span-7 flex flex-col h-full">
+            <section class="bg-white rounded-[2rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex-1 flex flex-col hover-lift">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 text-sm flex items-center justify-center font-black">3</span>
+                        軌道データビューア
+                    </h2>
+                </div>
+
+                <div class="flex-1 bg-slate-900 rounded-[1.5rem] relative overflow-hidden flex items-center justify-center shadow-inner min-h-[400px]">
+                    
+                    <div id="outputPlaceholder" class="absolute inset-0 bg-slate-50/90 backdrop-blur flex flex-col items-center justify-center text-center p-6 z-20 transition-all duration-500">
+                        <div class="w-20 h-20 bg-white text-slate-300 rounded-full shadow-sm flex items-center justify-center mb-6">
+                            <i class="fas fa-video text-3xl"></i>
+                        </div>
+                        <p class="text-lg font-black text-slate-700">プレビューはここに表示されます</p>
+                        <p class="text-sm text-slate-500 mt-2 font-medium">画面左側から映像ソースをインポートしてください</p>
+                    </div>
+
+                    <div class="absolute inset-0 flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+                        <div id="hudOverlay" class="absolute top-6 left-6 flex gap-4 opacity-0 transition-all duration-700 translate-y-4">
+                            <div class="bg-white/10 backdrop-blur-md border border-white/20 px-5 py-3 rounded-2xl text-white shadow-lg">
+                                <p class="text-xs text-emerald-300 font-bold mb-1">SPEED</p>
+                                <p class="text-3xl font-black tracking-tighter">154 <span class="text-sm font-bold text-slate-300">km/h</span></p>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-md border border-white/20 px-5 py-3 rounded-2xl text-white shadow-lg">
+                                <p class="text-xs text-blue-300 font-bold mb-1">SPIN RATE</p>
+                                <p class="text-3xl font-black tracking-tighter">2,450 <span class="text-sm font-bold text-slate-300">rpm</span></p>
+                            </div>
+                        </div>
+
+                        <div class="z-10 w-20 h-20 bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 border border-white/30 shadow-2xl">
+                            <i class="fas fa-play text-2xl ml-1"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-slate-800">1080p MP4 (H.264)</p>
+                        <p class="text-xs text-slate-500 mt-1">アルファチャンネル対応</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <button id="resetBtn" class="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-full transition-all hidden" onclick="resetAll()">
+                            リセット
+                        </button>
+                        <button id="downloadBtn" class="px-8 py-3.5 bg-slate-200 text-slate-400 text-sm font-bold rounded-full cursor-not-allowed transition-all flex items-center gap-3" disabled>
+                            <i class="fas fa-download"></i> エクスポート
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        function startAnalysis() {
+            // ステータス更新
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'text-xs px-4 py-1.5 bg-blue-100 text-blue-600 font-bold rounded-full';
+            badge.innerText = '解析中';
+            
+            // スピナーアニメーションの生成
+            const iconContainer = document.getElementById('statusIconContainer');
+            iconContainer.innerHTML = `
+                <div class="absolute inset-0 spinner-gradient"></div>
+                <div class="absolute inset-[3px] spinner-inner flex items-center justify-center text-blue-500">
+                    <i class="fas fa-cog fa-spin"></i>
+                </div>
+            `;
+            
+            document.getElementById('statusTitle').innerText = '軌道トラッキング実行中';
+            document.getElementById('statusDesc').innerText = 'ボールの座標データと回転数を抽出しています';
+
+            let progress = 0;
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            const interval = setInterval(() => {
+                progress += 2;
+                progressBar.style.width = progress + '%';
+                progressText.innerText = progress + '%';
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    completeAnalysis();
+                }
+            }, 40);
+        }
+
+        function completeAnalysis() {
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'text-xs px-4 py-1.5 bg-emerald-100 text-emerald-600 font-bold rounded-full';
+            badge.innerText = '完了';
+
+            const iconContainer = document.getElementById('statusIconContainer');
+            iconContainer.innerHTML = `
+                <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center text-xl">
+                    <i class="fas fa-check"></i>
+                </div>
+            `;
+
+            document.getElementById('statusTitle').innerText = '解析完了';
+            document.getElementById('statusDesc').innerText = '高品質な軌道動画の生成が完了しました';
+
+            // プレースホルダーをフェードアウト、HUDをスライドイン
+            document.getElementById('outputPlaceholder').classList.add('opacity-0', 'pointer-events-none');
+            const hud = document.getElementById('hudOverlay');
+            hud.classList.remove('opacity-0', 'translate-y-4');
+            hud.classList.add('opacity-100', 'translate-y-0');
+
+            // エクスポートボタンをアクティブ化 (トレンドのグラデーション)
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.disabled = false;
+            downloadBtn.className = 'px-8 py-3.5 bg-gradient-to-r from-blue-500 to-emerald-400 hover:from-blue-400 hover:to-emerald-300 text-white text-sm font-bold rounded-full transition-all flex items-center gap-3 shadow-lg shadow-emerald-200 hover:-translate-y-1';
+
+            document.getElementById('resetBtn').classList.remove('hidden');
+        }
+
+        function resetAll() {
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'text-xs px-4 py-1.5 bg-slate-100 text-slate-500 font-bold rounded-full';
+            badge.innerText = '待機中';
+
+            const iconContainer = document.getElementById('statusIconContainer');
+            iconContainer.innerHTML = `
+                <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center">
+                    <i class="fas fa-pause"></i>
+                </div>
+            `;
+
+            document.getElementById('statusTitle').innerText = 'システム待機中';
+            document.getElementById('statusDesc').innerText = '映像がアップロードされると自動的に開始します';
+
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressText').innerText = '0%';
+
+            document.getElementById('outputPlaceholder').classList.remove('opacity-0', 'pointer-events-none');
+            const hud = document.getElementById('hudOverlay');
+            hud.classList.remove('opacity-100', 'translate-y-0');
+            hud.classList.add('opacity-0', 'translate-y-4');
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.disabled = true;
+            downloadBtn.className = 'px-8 py-3.5 bg-slate-200 text-slate-400 text-sm font-bold rounded-full cursor-not-allowed transition-all flex items-center gap-3';
+
+            document.getElementById('resetBtn').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
