@@ -1,6 +1,8 @@
 """
 指定した重みファイルで、videos_dir配下の動画をブラウザ上で選んでその場で
-推論・確認するためのビューア(閲覧専用、編集不可)。
+推論・確認するためのビューア(閲覧専用、編集不可)。player(投手・捕手・打者)専用。
+stadiumはapp/results_web_keypoint.pyを使う(keypoint版の方が精度が高いため、
+stadiumのbbox推論結果閲覧には対応していない)。
 
 bbox_label_web.py と同じ理由(opencv-python内蔵FFmpegのインターレース対応不可)
 に加え、cv2.VideoWriterで書き出すオーバーレイ動画のコーデック(mpeg4/mp4v)は
@@ -13,8 +15,8 @@ SSEでJPEG配信し、検出結果(bbox)はブラウザ側でcanvasに重ね描�
 選択はキャッシュを読むだけなので高速。
 
 使い方:
-    python app/results_web.py --task stadium --weights runs/train/stadium/exp/best.pt
-    python app/results_web.py --task stadium --weights runs/train/stadium/exp/best.pt \
+    python app/results_web.py --task player --weights runs/train/player/exp/best.pt
+    python app/results_web.py --task player --weights runs/train/player/exp/best.pt \
         --videos-dir /data2/baseball_data/detect_dataset/videos --conf-thres 0.05 --port 5021
 """
 
@@ -34,9 +36,9 @@ ROOT = FILE.parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from infer import load_classes, run_on_video
+from infer import run_on_video
 from models.detector import load_checkpoint
-from utils.label_store import has_label, list_videos, load_tasks
+from utils.label_store import has_label, list_videos, load_classes, load_tasks
 from utils.stabilize import aggregate_video_detections
 from utils.video_io import open_video, read_frame_bgr, stream_meta
 
@@ -198,12 +200,12 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "例:\n"
-            "  python app/results_web.py --task stadium --weights runs/train/stadium/exp/best.pt\n"
-            "  python app/results_web.py --task stadium --weights runs/train/stadium/exp/best.pt "
+            "  python app/results_web.py --task player --weights runs/train/player/exp/best.pt\n"
+            "  python app/results_web.py --task player --weights runs/train/player/exp/best.pt "
             "--conf-thres 0.05 --port 5021\n"
         ),
     )
-    p.add_argument("--task", required=True, choices=["stadium", "player"])
+    p.add_argument("--task", default="player", choices=["player"])
     p.add_argument("--classes-yaml", default=str(ROOT / "data" / "classes.yaml"))
     p.add_argument("--weights", required=True, help="学習済み重み(.pt)")
     p.add_argument("--videos-dir", default=None, help="省略時はclasses.yamlの値")

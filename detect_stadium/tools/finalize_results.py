@@ -5,14 +5,14 @@
 アノテーションがないフレームはモデル推論結果で埋めて、
 動画1本ごとに「最終的な検出結果」をJSON+オーバーレイ動画として保存する。
 
-事前に infer.py で推論を実行しておくこと。
+事前に infer.py(player)またはinfer_keypoint.py(stadium)で推論を実行しておくこと。
 
 使い方:
-    python infer.py --task stadium --weights runs/train/stadium/exp/best.pt \
-        --source /data2/baseball_data/videos --out-dir runs/detect/stadium/exp
+    python infer_keypoint.py --task stadium --weights runs/train_keypoint/stadium/exp/best.pt \
+        --source /data2/baseball_data/detect_dataset/videos --out-dir runs/detect_keypoint/stadium/exp
 
     python tools/finalize_results.py --task stadium \
-        --predictions-dir runs/detect/stadium/exp/predictions \
+        --predictions-dir runs/detect_keypoint/stadium/exp/predictions \
         --out-dir runs/final/stadium
 """
 

@@ -1,8 +1,9 @@
 """
 アノテーション済みラベル(bbox_label_web.pyで作成)を使って物体検出モデルを学習する。
+player(投手・捕手・打者)専用。stadiumはtrain_keypoint.pyを使う(keypoint版の方が
+精度が高いため、stadiumのbbox学習には対応していない)。
 
 使い方:
-    python train.py --task stadium
     python train.py --task player --epochs 80 --batch-size 8
 
 学習結果は runs/train/<task>/<name>/ に best.pt / last.pt / classes.json として保存される。
@@ -91,7 +92,7 @@ def validate(model, loader, device):
 
 def parse_args():
     p = argparse.ArgumentParser(description="矩形検出モデルの学習")
-    p.add_argument("--task", required=True, choices=["stadium", "player"])
+    p.add_argument("--task", default="player", choices=["player"])
     p.add_argument("--classes-yaml", default=str(ROOT / "data" / "classes.yaml"))
     p.add_argument("--videos-dir", default=None, help="省略時はclasses.yamlの値")
     p.add_argument("--labels-dir", default=None, help="省略時はclasses.yamlの値")

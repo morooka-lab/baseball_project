@@ -24,8 +24,9 @@
     <b>← / →</b> 前後フレーム &nbsp;|&nbsp;
     <b>F / B</b> ±サンプル間隔 &nbsp;|&nbsp;
     <b>E</b> このフレームは対象物なしとして確定 &nbsp;|&nbsp;
-    <b>P</b> この位置を以降のフレームに適用 &nbsp;|&nbsp;
-    <b>S</b> 保存
+    <b>P</b> 選択中クラスの位置を以降のフレームに適用 &nbsp;|&nbsp;
+    <b>S</b> 保存 &nbsp;|&nbsp;
+    未レビューのフレームは選択中クラスのみ直前のフレームから自動コピー
   </span>
 </div>
 
@@ -62,6 +63,9 @@
         <input type="number" id="jumpFrame" min="0" placeholder="jump">
         <button onclick="jumpToFrame()">移動</button>
       </label>
+      <label class="step-label" title="未レビューのフレームに移動した際、現在選択中のクラスについてのみ、直前にそのクラスがラベル付けされたフレームの内容を自動でコピーして編集開始点にします(他クラスには影響しません)">
+        <input type="checkbox" id="autoCopyPrev" checked> 前フレームからコピー(選択中クラスのみ)
+      </label>
       {% if annotation_type == "point" %}
       <label class="step-label">点サイズ:
         <input type="number" id="pointSize" value="4" min="1" max="30" onchange="updatePointSize()">
@@ -71,7 +75,7 @@
       <label class="step-label">終了フレーム:
         <input type="number" id="propagateEnd" min="0" placeholder="動画末尾まで">
       </label>
-      <button class="btn-propagate" onclick="propagateToEnd()" title="現在フレームの位置を以降のフレームに適用 (P)">以降に適用 [P]</button>
+      <button class="btn-propagate" onclick="propagateToEnd()" title="現在フレームの選択中クラスの位置を以降のフレームに適用(他クラスはそのまま) (P)">以降に適用 [P]</button>
       <button class="btn-save" onclick="saveLabels()">💾 保存 [S]</button>
       <div class="saved-msg" id="savedMsg"></div>
       <div class="dirty-badge" id="dirtyBadge"></div>

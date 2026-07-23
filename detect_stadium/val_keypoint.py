@@ -28,10 +28,9 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from infer import load_classes
 from models.keypoint_detector import load_checkpoint
 from utils.keypoint_dataset import KeypointDetectionDataset, build_splits, collate_fn, get_eval_transforms
-from utils.label_store import load_tasks
+from utils.label_store import load_classes, load_tasks
 from utils.map_eval import evaluate
 
 

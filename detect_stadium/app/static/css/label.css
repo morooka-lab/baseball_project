@@ -200,6 +200,10 @@ canvas {
   border-radius: 4px;
   padding: 3px 5px;
 }
+.step-label input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+}
 button {
   background: #333;
   color: #ccc;

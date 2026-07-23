@@ -69,6 +69,16 @@ def load_tasks(classes_yaml: str) -> Dict[str, TaskConfig]:
     return tasks
 
 
+def load_classes(weights_path: str, task_classes: List[str]) -> List[str]:
+    """重みファイルと同じディレクトリのclasses.jsonがあればそちらを優先する
+    (学習時のクラス順とclasses.yaml現在値がズレていても推論側が壊れないようにする)。"""
+    classes_json = Path(weights_path).parent / "classes.json"
+    if classes_json.exists():
+        with open(classes_json, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return task_classes
+
+
 def list_videos(videos_dir: str) -> List[Path]:
     root = Path(videos_dir)
     if not root.exists():

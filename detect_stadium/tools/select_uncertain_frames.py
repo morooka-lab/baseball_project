@@ -10,12 +10,12 @@ infer.py の推論結果から「モデルが自信を持てていないフレ�
 
 使い方:
     # 事前に低いconf-thresで推論しておく (境界線上の検出も拾うため)
-    python infer.py --task stadium --weights runs/train/stadium/exp/best.pt \
-        --source /data2/baseball_data/videos --conf-thres 0.05 \
-        --out-dir runs/detect/stadium/exp
+    python infer_keypoint.py --task stadium --weights runs/train_keypoint/stadium/exp/best.pt \
+        --source /data2/baseball_data/detect_dataset/videos --conf-thres 0.05 \
+        --out-dir runs/detect_keypoint/stadium/exp
 
     python tools/select_uncertain_frames.py --task stadium \
-        --predictions-dir runs/detect/stadium/exp/predictions --top-k 50
+        --predictions-dir runs/detect_keypoint/stadium/exp/predictions --top-k 50
 """
 
 import argparse

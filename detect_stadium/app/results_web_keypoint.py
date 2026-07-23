@@ -26,10 +26,9 @@ ROOT = FILE.parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from infer import load_classes
 from infer_keypoint import run_on_video
 from models.keypoint_detector import load_checkpoint
-from utils.label_store import has_label, list_videos, load_tasks
+from utils.label_store import has_label, list_videos, load_classes, load_tasks
 from utils.keypoint_stabilize import aggregate_video_keypoints
 from utils.video_io import open_video, read_frame_bgr, stream_meta
 from val_keypoint import load_keypoint_meta

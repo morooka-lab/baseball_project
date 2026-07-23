@@ -1,10 +1,12 @@
 """
-学習済みモデルの精度をvalidationセットでmAP評価する。
+学習済みモデルの精度をvalidationセットでmAP評価する。player(投手・捕手・打者)専用。
+stadiumはval_keypoint.pyを使う(keypoint版の方が精度が高いため、stadiumのbbox評価
+には対応していない)。
 train.py と同じ (val-ratio, seed) で分割すれば同一のvalidationセットを再現できる。
 
 使い方:
-    python val.py --task stadium --weights runs/train/stadium/exp/best.pt
-    python val.py --task stadium --weights runs/train/stadium/exp/best.pt --iou-thres 0.5 --conf-thres 0.3
+    python val.py --task player --weights runs/train/player/exp/best.pt
+    python val.py --task player --weights runs/train/player/exp/best.pt --iou-thres 0.5 --conf-thres 0.3
 """
 
 import argparse
@@ -20,16 +22,15 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from infer import load_classes
 from models.detector import load_checkpoint
 from utils.detection_dataset import DetectionDataset, build_splits, collate_fn, get_eval_transforms
-from utils.label_store import load_tasks
+from utils.label_store import load_classes, load_tasks
 from utils.map_eval import evaluate
 
 
 def parse_args():
     p = argparse.ArgumentParser(description="mAP精度検証")
-    p.add_argument("--task", required=True, choices=["stadium", "player"])
+    p.add_argument("--task", default="player", choices=["player"])
     p.add_argument("--classes-yaml", default=str(ROOT / "data" / "classes.yaml"))
     p.add_argument("--videos-dir", default=None)
     p.add_argument("--labels-dir", default=None)

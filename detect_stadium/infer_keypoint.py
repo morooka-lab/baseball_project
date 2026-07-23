@@ -29,9 +29,8 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from infer import load_classes
 from models.keypoint_detector import load_checkpoint
-from utils.label_store import has_label, load_tasks
+from utils.label_store import has_label, load_classes, load_tasks
 from utils.video_io import open_video, stream_meta
 from val_keypoint import load_keypoint_meta
 

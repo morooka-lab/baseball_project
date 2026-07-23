@@ -342,6 +342,7 @@ async function navigate(delta) {
   if (next === currentFrame) return;
   currentFrame = next;
   selectedBox = -1;
+  maybeCopyFromPrevFrame(next);
   updateControls();
   await renderFrame(next);
 }
@@ -353,8 +354,50 @@ async function jumpToFrame() {
   if (Number.isNaN(n)) return;
   currentFrame = Math.max(0, Math.min(meta.frames - 1, n));
   selectedBox = -1;
+  maybeCopyFromPrevFrame(currentFrame);
   updateControls();
   await renderFrame(currentFrame);
+}
+
+// ─── Copy from previous labeled frame (前フレームをコピーして編集開始点にする) ──
+// playerのように対象物がフレームごとに動く場合、位置がずれた分だけドラッグで
+// 微調整すればよいように、未レビューのフレームへ移動した際は現在選択中の
+// クラス(currentClass)についてのみ、直近でそのクラスがラベル付けされた
+// フレームのbox/pointをコピーして開始点にする。他クラスの既存アノテーション
+// には触れない(クラスごとに別々のペースで前方へ進めていく想定のため)。
+// 「対象物なし」で確定した(空配列の)フレームはコピー元にもコピー先にもしない
+// (誤って「対象物なし」を後続フレームへ広げてしまわないため)。
+
+function autoCopyEnabled() {
+  const el = document.getElementById('autoCopyPrev');
+  return el ? el.checked : true;
+}
+
+function findPrevFrameWithClass(n, classId) {
+  for (let k = n - 1; k >= 0; k--) {
+    const boxes = frameLabels[k];
+    if (boxes && boxes.some(b => b.class_id === classId)) return k;
+  }
+  return -1;
+}
+
+function maybeCopyFromPrevFrame(n) {
+  if (!autoCopyEnabled()) return;
+  const existing = frameLabels[n];
+  if (existing !== undefined) {
+    if (existing.length === 0) return;  // 「対象物なし」確定フレームには追加しない
+    if (existing.some(b => b.class_id === currentClass)) return;  // このクラスは入力済み
+  }
+
+  const prev = findPrevFrameWithClass(n, currentClass);
+  if (prev === -1) return;
+  const prevBox = frameLabels[prev].find(b => b.class_id === currentClass);
+  if (!prevBox) return;
+
+  if (!frameLabels[n]) frameLabels[n] = [];
+  frameLabels[n].push({ ...prevBox });
+  dirty = true;
+  setDirtyBadge(true);
 }
 
 // ─── Empty marking ──────────────────────────────────────────────────────────
@@ -375,13 +418,15 @@ async function markEmpty() {
 // ─── Propagate to following frames ─────────────────────────────────────────
 // 球場のマーカーなどは位置がほとんど変わらないため、現在フレームのアノテー
 // ションをそのまま以降のフレームへコピーしてレビュー作業を省略できるように
-// する。既存のアノテーションは上書きされる。
+// する。現在選択中のクラス(currentClass)のbox/pointのみが対象で、対象フレーム
+// の他クラスの既存アノテーションはそのまま残す(そのクラスの既存分のみ上書き)。
 
 async function propagateToEnd() {
   if (!currentVideo) return;
-  const boxes = frameLabels[currentFrame];
-  if (!boxes) {
-    flashMsg('先に現在フレームをアノテーションしてください', true);
+  const boxes = frameLabels[currentFrame] || [];
+  const classBoxes = boxes.filter(b => b.class_id === currentClass);
+  if (classBoxes.length === 0) {
+    flashMsg('現在選択中のクラスのアノテーションが現在フレームにありません', true);
     return;
   }
 
@@ -396,15 +441,18 @@ async function propagateToEnd() {
     return;
   }
 
+  const className = CLASSES[currentClass] || `class${currentClass}`;
   const ok = confirm(
-    `現在フレーム(${currentFrame})のアノテーションを ` +
+    `現在フレーム(${currentFrame})の「${className}」のアノテーションを ` +
     `${currentFrame + 1} 〜 ${end} (${n} フレーム) に適用します。\n` +
-    `この範囲の既存のアノテーションは上書きされます。よろしいですか？`
+    `対象フレームの「${className}」の既存アノテーションは上書きされます(他クラスはそのまま)。よろしいですか？`
   );
   if (!ok) return;
 
   for (let f = currentFrame + 1; f <= end; f++) {
-    frameLabels[f] = boxes.map(b => ({ ...b }));
+    const target = (frameLabels[f] || []).filter(b => b.class_id !== currentClass);
+    for (const b of classBoxes) target.push({ ...b });
+    frameLabels[f] = target;
   }
   dirty = true;
   setDirtyBadge(true);

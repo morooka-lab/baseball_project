@@ -1,5 +1,7 @@
 """
-学習済みモデルで未ラベル動画に推論する。
+学習済みモデルで未ラベル動画に推論する。player(投手・捕手・打者)専用。
+stadiumはinfer_keypoint.pyを使う(keypoint版の方が精度が高いため、stadiumの
+bbox推論には対応していない)。
 
 フレームごとの検出結果 (bbox + confidence) をJSONに保存し、
 必要に応じてbboxを描画したオーバーレイ動画も出力する。
@@ -11,10 +13,10 @@
 推論をスキップする(--include-labeledで無効化可能)。
 
 使い方:
-    python infer.py --task stadium --weights runs/train/stadium/exp/best.pt \
-        --source /data2/baseball_data/videos --out-dir runs/detect/stadium/exp
+    python infer.py --task player --weights runs/train/player/exp/best.pt \
+        --source /data2/baseball_data/videos --out-dir runs/detect/player/exp
 
-    python infer.py --task stadium --weights runs/train/stadium/exp/best.pt \
+    python infer.py --task player --weights runs/train/player/exp/best.pt \
         --source path/to/single_clip.mp4 --save-video
 """
 
@@ -32,16 +34,8 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from models.detector import load_checkpoint
-from utils.label_store import has_label, load_tasks
+from utils.label_store import has_label, load_classes, load_tasks
 from utils.video_io import open_video, stream_meta
-
-
-def load_classes(weights_path: str, task_classes):
-    classes_json = Path(weights_path).parent / "classes.json"
-    if classes_json.exists():
-        with open(classes_json, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return task_classes
 
 
 def find_videos(source: str):
@@ -119,7 +113,7 @@ def run_on_video(model, video_path: Path, classes, device, conf_thres, frame_str
 
 def parse_args():
     p = argparse.ArgumentParser(description="学習済みモデルによる推論")
-    p.add_argument("--task", required=True, choices=["stadium", "player"])
+    p.add_argument("--task", default="player", choices=["player"])
     p.add_argument("--classes-yaml", default=str(ROOT / "data" / "classes.yaml"))
     p.add_argument("--weights", required=True)
     p.add_argument("--source", required=True, help="動画ファイル or 動画を含むディレクトリ")
